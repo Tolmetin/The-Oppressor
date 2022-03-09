@@ -1,0 +1,15 @@
+{
+  "name": "oppressor",
+  "version": "0.0.1",
+  "description": "Discord Server Oppressor",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index"
+  },
+  "author": "y40e",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^13.6.0"
+  },
+  "type": "module"
+}

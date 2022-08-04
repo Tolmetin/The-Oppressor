@@ -5,7 +5,27 @@ import { MessageEmbed } from 'discord.js'
 
 let oppressor = new Bot()
 
-oppressor.addOnJoinRole(config.roles.theCommonwealth)
+oppressor.addOnJoinRole(config.roles.normalBoy)
+
+oppressor.addCommand('gamble', async (message) => {
+    try {
+        let random = Math.floor(Math.random() * 100)
+
+        if (random == 0) {
+            let victim = await message.guild.members.fetch(message.author.id)
+            victim.roles.add(config.roles.badBoy)
+            victim.roles.remove(config.roles.normalBoy)
+            message.channel.send(`<@${message.author.id}> has won the gamble (Rolled a ${random})`)
+        } else {
+            message.channel.send(`<@${message.author.id}> has lost the gamble (Rolled a ${random})`)
+        }
+    } 
+    
+    catch (error) {
+        let bugLogsChannel = await oppressor.getBugLogsChannel()
+        bugLogsChannel.send(`\`\`\`${error}\`\`\``)
+    }
+})
 
 oppressor.addCommand('postrulesembed', async (message) => {
     if (!oppressor.isMemberAdmin(message)) {
@@ -17,28 +37,35 @@ oppressor.addCommand('postrulesembed', async (message) => {
     let oppressorRole = await message.guild.roles.botRoleFor(oppressor.client.user)
 
     embed.setColor(oppressorRole.color)
-    embed.setTitle('The Server Rules That Are Designed to Ruin All of Your Fun')
+    embed.setTitle('Unreasonable Server Rules')
     embed.setDescription(config.rules.join('\n\n'))
 
     message.channel.send({embeds: [embed]})
 })
 
-oppressor.addCommand('purge', async (message) => {
-    if (!oppressor.isMemberAdmin(message)) {
-        oppressor.sendUnauthorizedUseWarning(message)
-        return
+oppressor.addCommand('purge', async (message, args) => {
+    try {
+        if (!oppressor.isMemberAdmin(message)) {
+            oppressor.sendUnauthorizedUseWarning(message)
+            return
+        }
+
+        await message.channel.messages.fetch({limit: args[0]})
+            .then(async messages => {
+                for (let m of messages) {
+                    await sleep(1000)
+                    m[1].delete()
+                }
+
+                message.channel.send(`Purged \`${messages.size}\` messages.`)
+            })
+            .catch(console.error)
+    } 
+    
+    catch (error) {
+        let bugLogsChannel = await oppressor.getBugLogsChannel()
+        bugLogsChannel.send(`\`\`\`${error}\`\`\``)
     }
-
-    await message.channel.messages.fetch({limit: 10})
-        .then(async messages => {
-            for (let m of messages) {
-                await sleep(1000)
-                m[1].delete()
-            }
-
-            message.channel.send(`Purged \`${messages.size}\` messages.`)
-        })
-        .catch(console.error)
 })
 
 oppressor.client.on('guildMemberAdd', async (member) => {
@@ -88,23 +115,30 @@ oppressor.client.on('messageDelete', async (message) => {
 }) 
 
 oppressor.client.on('messageUpdate', async (oldMessage, newMessage) => {
-    let adminLogsChannel = await oppressor.getAdminLogsChannel()
+    try {
+        let adminLogsChannel = await oppressor.getAdminLogsChannel()
 
-    let messageDate = oldMessage.createdAt
-    let currentDate = new Date()
+        let messageDate = oldMessage.createdAt
+        let currentDate = new Date()
 
-    let embed = new MessageEmbed()
-    let oppressorRole = await oldMessage.guild.roles.botRoleFor(oppressor.client.user)
-    embed.setColor(oppressorRole.color)
-    embed.setTitle('Message Edit')
-    embed.addField('Author', oldMessage.author.tag, true)
-    embed.addField('Creation date (UTC)', `${messageDate.getUTCMonth()}/${messageDate.getUTCDate()}/${messageDate.getUTCFullYear()} @ ${messageDate.getUTCHours()}:${messageDate.getUTCMinutes()}:${messageDate.getUTCSeconds()}`, true)
-    embed.addField('Edit date (UTC)', `${currentDate.getUTCMonth()}/${currentDate.getUTCDate()}/${currentDate.getUTCFullYear()} @ ${currentDate.getUTCHours()}:${currentDate.getUTCMinutes()}:${currentDate.getUTCSeconds()}`, true)
-    embed.addField('Message channel', `<#${oldMessage.channelId}>`)
-    embed.addField('Message content', oldMessage.content)
-    embed.addField('Message content after edit', newMessage.content)
+        let embed = new MessageEmbed()
+        let oppressorRole = await oldMessage.guild.roles.botRoleFor(oppressor.client.user)
+        embed.setColor(oppressorRole.color)
+        embed.setTitle('Message Edit')
+        embed.addField('Author', oldMessage.author.tag, true)
+        embed.addField('Creation date (UTC)', `${messageDate.getUTCMonth()}/${messageDate.getUTCDate()}/${messageDate.getUTCFullYear()} @ ${messageDate.getUTCHours()}:${messageDate.getUTCMinutes()}:${messageDate.getUTCSeconds()}`, true)
+        embed.addField('Edit date (UTC)', `${currentDate.getUTCMonth()}/${currentDate.getUTCDate()}/${currentDate.getUTCFullYear()} @ ${currentDate.getUTCHours()}:${currentDate.getUTCMinutes()}:${currentDate.getUTCSeconds()}`, true)
+        embed.addField('Message channel', `<#${oldMessage.channelId}>`)
+        embed.addField('Message content', oldMessage.content)
+        embed.addField('Message content after edit', newMessage.content)
 
-    adminLogsChannel.send({embeds: [embed]})
+        adminLogsChannel.send({embeds: [embed]})
+    } 
+    
+    catch (error) {
+        let bugLogsChannel = await oppressor.getBugLogsChannel()
+        bugLogsChannel.send(`\`\`\`${error}\`\`\``)
+    }
 })
 
 oppressor.login()

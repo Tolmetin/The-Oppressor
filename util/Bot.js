@@ -46,8 +46,10 @@ class Bot {
             return
         }
 
-        let commandString = message.content.substring(1).toLowerCase()
-        this.executeCommand(commandString, message)
+        let commandString = message.content.substring(1).toLowerCase().split(" ")[0]
+        let commandArguments = message.content.substring(1).toLowerCase().split(" ")
+        commandArguments.splice(0, 1)
+        this.executeCommand(commandString, message, commandArguments)
     }
 
     /**
@@ -64,13 +66,17 @@ class Bot {
      * @param {String} commandString
      * @param {Message} message 
      */
-    executeCommand(commandString, message) {
-        if (this.commands[commandString]) {
-            this.commands[commandString](message)
-            return
-        } 
+    executeCommand(commandString, message, args) {
+        try {
+            if (this.commands[commandString]) {
+                this.commands[commandString](message, args)
+                return
+            } 
 
-        message.channel.send('Invalid command.')
+            message.channel.send('Invalid command.')
+        } catch (e) {
+
+        }
     }
 
     /**
@@ -84,12 +90,16 @@ class Bot {
     /**
      * 
      * @param {Message} message 
-     * @returns 
+     * @returns {Boolean}
      */
     isMemberAdmin(message) {
         return message.member.permissions.has(Permissions.FLAGS.ADMINISTRATOR)
     }
 
+    /**
+     * 
+     * @param {String} roleSnowflake 
+     */
     addOnJoinRole(roleSnowflake) {
         this.onJoinRoles.push(roleSnowflake)
     }
@@ -108,6 +118,14 @@ class Bot {
      */
     async getUserEventsChannel() {
         return await this.client.channels.fetch(config.channels.userEvents)
+    }
+
+    /**
+     * 
+     * @returns {Channel} bug logs channel
+     */
+    async getBugLogsChannel() {
+        return await this.client.channels.fetch(config.channels.bugLogs)
     }
 }
 
